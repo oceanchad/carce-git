@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 
-gmaps = googlemaps.Client(key='AIzaSyBP5NrygNOIbmWPbXxZ8pyOY9UeCL__qCk')
+gmaps = googlemaps.Client(key='')
 
 
 cities= ["臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣",
