@@ -5,56 +5,40 @@ import os
 import pandas as pd
 import time
 import csv
+from bs4 import BeautifulSoup
+import requests
+from os import listdir
+from os.path import isfile, join, expanduser
+from os import environ
+import warnings
+import time
+warnings.filterwarnings("ignore")
 
-gmaps = googlemaps.Client(key='AIzaSyBP5NrygNOIbmWPbXxZ8pyOY9UeCL__qCk')
-
-regions = ['永和區', '蘆洲區', '大安區', '新興區', '板橋區', '三重區', '大同區', '松山區', '新莊區', '北區', '萬華區', '中區', '中正區', 
-'苓雅區', '中和區','西區', '信義區', '旗津區', '南區', '三民區', '鹽埕區', '中山區', '前金區', '東區', '鳳山區', '桃園區', '北區', 
-'中西區', '仁愛區', '左營區', '前鎮區', '北區', '鼓山區', '內湖區', '文山區', '東區', '土城區', '大里區', '楠梓區', '東區', '羅東鎮', 
-'八德區', '安平區', '永康區', '西屯區', '南屯區', '樹林區', '南港區', '中壢區', '中正區', '信義區', '平鎮區', '西區', '南區', '安樂區', 
-'士林區', '北屯區', '北投區', '中山區', '潭子區', '竹北市', '東區', '鶯歌區', '泰山區', '豐原區', '梧棲區', '彰化市', '花蓮市', '小港區', 
-'宜蘭市', '員林市', '梓官區', '屏東市', '大雅區', '汐止區', '淡水區', '五股區', '新店區', '仁武區', '沙鹿區', '苗栗市', '竹南鎮', '和美鎮', 
-'龜山區', '蘆竹區']
-
-regions_1 = ['鹿港鎮', '林園區', '林口區', '龍井區', '岡山區', '新營區', '金城鎮', '頭份市', '楊梅區', '茄萣區', '神岡區', '馬公市', 
-'鳥松區', '竹東鎮', '安南區', '琉球鄉', '永靖鄉', '烏日區', '北斗鎮', '溪湖鎮', '暖暖區', '伸港鄉', '埔心鄉', '龍潭區', '太平區', '東港鎮', 
-'大寮區', '大肚區', '佳里區', '仁德區', '橋頭區', '湖內區', '香山區', '南投市', '清水區', '湖口鄉', '秀水鄉', '大甲區', '大社區', '彌陀區', 
-'吉安鄉', '潮州鎮', '花壇鄉', '新豐鄉', '歸仁區', '大村鄉', '田中鎮', '社頭鄉', '斗六市', '深坑區', '林邊鄉', '田尾鄉', '金寧鄉', '路竹區', 
-'大園區', '五結鄉', '虎尾鎮', '八里區', '安定區', '臺東市', '七堵區', '北港鎮', '草屯鎮', '福興鄉', '后里區', '線西鄉', '斗南鎮', '西螺鎮', 
-'大溪區', '善化區', '新園鄉', '萬丹鄉', '朴子市', '民雄鄉', '埔鹽鄉', '阿蓮區', '麻豆區', '石岡區', '烈嶼鄉', '新區', '觀音區', '外埔區', 
-'長治鄉', '南竿鄉', '西港區', '金湖鎮', '埤頭鄉', '水上鄉', '下營區', '大安區', '新化區', '新城鄉', '麟洛鄉', '霧峰區', '冬山鄉', '苑裡鎮', 
-'內埔鄉', '關廟區', '壯圍鄉', '大樹區', '芬園鄉', '三峽區', '永安區', '佳冬鄉', '麥寮鄉', '土庫鎮', '新屋區', '竹田鄉', '太保市', '烏坵鄉']
-
-regions_2 = ['莿桐鄉', '瑞芳區', '南州鄉', '七美鄉', '二林鎮', '九如鄉', '金沙鎮', '二水鄉', '崁頂鄉', '埔里鎮', '白沙鄉', '芎林鄉', '鹽水區', '大林鎮', 
-'新港鄉', '林內鄉', '學甲區', '後龍鎮', '將軍區', '公館鄉', '名間鄉', '新埔鎮', '燕巢區', '湖西鄉', '西嶼鄉', '二崙鄉', '蘇澳鎮', '金山區', 
-'溪口鄉', '臺西鄉', '布袋鎮', '東勢區', '大埤鄉', '枋寮鄉', '崙背鄉', '鹽埔鄉', '溪州鄉', '旗山區', '望安鄉', '里港鄉', '芳苑鄉', '六腳鄉', 
-'東引鄉', '竹塘鄉', '新社區', '元長鄉', '礁溪鄉', '萬里區', '三芝區', '柳營區', '褒忠鄉', '中埔鄉', '水林鄉', '萬巒鄉', '口湖鄉', '莒光鄉', 
-'美濃區', '六甲區', '後壁區', '通霄鎮', '枋山鄉', '官田區', '東勢鄉', '東石鄉', '四湖鄉', '員山鄉', '頭城鎮', '鹿草鄉', '綠島鄉', '高樹鄉', 
-'北竿鄉', '造橋鄉', '山上區', '大城鄉', '北門區', '三義鄉', '石門區', '寶山鄉', '義竹鄉', '銅鑼鄉', '恆春鎮', '關西鎮', '白河區', '卓蘭鎮', 
-'竹山鎮', '竹崎鄉', '集集鎮', '七股區', '頭屋鄉', '橫山鄉', '古坑鄉', '北埔鄉', '玉井區', '車城鄉', '西湖鄉', '新埤鄉', '東山區', '水里鄉', 
-'梅山鄉', '大湖鄉', '內門區', '三星鄉', '關山鎮', '大內區', '魚池鄉', '三灣鄉', '鹿谷鄉', '貢寮區', '峨眉鄉', '太麻里鄉', '杉林區', '蘭嶼鄉']
-
-regions_3 = ['國姓鄉', '中寮鄉', '池上鄉', '番路鄉', '成功鎮', '玉里鎮', '鳳林鎮', '瑪家鄉', '鹿野鄉', '楠西區', '瑞穗鄉', '大武鄉', '壽豐鄉', '光復鄉', 
-'田寮區', '六龜區', '平溪區', '龍崎區', '左鎮區', '雙溪區', '南庄鄉', '富里鄉', '滿州鄉', '石碇區', '獅潭鄉', '南化區', '甲仙區', '泰武鄉', 
-'長濱鄉', '來義鄉', '卑南鄉', '東河鄉', '坪林區', '三地門鄉', '復興區', '春日鄉', '大埔鄉', '牡丹鄉', '豐濱鄉', '烏來區', '五峰鄉', '尖石鄉', 
-'獅子鄉', '仁愛鄉', '阿里山鄉', '那瑪夏區', '霧臺鄉', '和平區', '信義鄉', '達仁鄉', '泰安鄉', '茂林區', '秀林鄉']
+GOOGLE_API = input("請輸入Google API驗證碼\n")
+SEARCH_WORD = input("欲搜尋關鍵字\n")
 
 
-
+gmaps = googlemaps.Client(key=GOOGLE_API)
+path = "/Users/chad/visualprojects/carce/carce-git/raw data/all region.txt"
+with open(path, "r") as f:
+    content = f.readlines()
+    lines = [line.replace("\n", "") for line in content]
+    chunk = [lines[x:x+60] for x in range(0, len(lines), 60)]
 
 ids = []
-for region in regions_2:
-    results = []
-    geocode_result = gmaps.geocode(region)              # 擷取鄉鎮緯度
-    loc = geocode_result[0]['geometry']['location']
-    query_result = gmaps.places_nearby(keyword="車廠",location=loc, radius=6000)
-    results.extend(query_result['results'])
-    while query_result.get('next_page_token'):
-        time.sleep(2)
-        query_result = gmaps.places_nearby(page_token=query_result['next_page_token'])
+for region in chunk:
+    for i in region:
+        results = []
+        geocode_result = gmaps.geocode(i)              # 擷取鄉鎮緯度
+        loc = geocode_result[0]['geometry']['location']
+        query_result = gmaps.places_nearby(keyword=SEARCH_WORD,location=loc, radius=6000)
         results.extend(query_result['results'])
-    for place in results:
-        ids.append(place['place_id'])
+        while query_result.get('next_page_token'):
+            time.sleep(2)
+            query_result = gmaps.places_nearby(page_token=query_result['next_page_token'])
+            results.extend(query_result['results'])
+        for place in results:
+            ids.append(place['place_id'])
 
 stores_info = []
 # 去除重複id
@@ -64,16 +48,77 @@ for id in ids:
 
 output = pd.DataFrame.from_dict(stores_info)
 
-output.to_csv('output3.csv', index=False, encoding="utf-8")
+output.to_csv('initial.csv', index=False, encoding="utf-8")
 
-# 從output.csv 中的店名去除各品牌
+raw = pd.read_csv("initial.csv")
+cols = raw.columns.tolist()
 
-car_list = ["LEXUS", "HYUNDAI","現代","BMW","客運","NISSAN", "Suzuki", "匯豐", "賓士", "MIT", "honda", "LUXGEN", "mazda", "kia", "pgo", "volvo"
-, "三菱", "audi"]
-moto_list = ["kymco", "yamaha", "宏佳騰", "sym", "三陽","gogoro","捷安特", "重機"]
-other_list = ["加油", "展示","驗", "服務", "電動", "車勢","鍍膜", "玻璃"]
+want = ["name", "formatted_address", "formatted_phone_number"]
 
-# 從output.csv 中的店名去除各連鎖
-Chain_store = ["慶通" , "中油", "歐特耐", "車得適", "車麗屋", "真便宜", "新焦點", "黃帽", "耐途耐"]
+for i in cols:
+    if i not in want:
+        raw = raw.drop(columns=[i])
 
-region_rm = ["大安區", "北投區", "中山區", "中正區", "板橋區", "新莊區", "蘆洲區", "土城區"]
+raw = raw[want]
+raw.to_csv('initial.csv', index=False, encoding="utf-8")
+
+
+print("需要輸入以下資料的路徑\n1. 欲過濾*清單*所在資料夾\n2. 欲過濾*區域*所在資料夾\n3. 資料所在資料夾路徑\n4. 資料名稱\n")
+
+path_depot = input("請輸入欲過濾清單(以絕對路徑的資料夾表示)\n備註： 會自動載入資料夾中所有清單(eg. /Users/chad/visualprojects/carce/carce-git/filter/)\n")
+path_region = input("請輸入欲過濾區域(以絕對路徑的資料夾表示)\n備註： 會自動載入資料夾中所有清單\n")
+data_path = input("請輸入資料所在資料夾路徑\n")
+file = input("請輸入資料名稱\n備註：檔案需是csv格式\n")
+
+depot_raw = pd.read_csv(data_path+ file+".csv")
+
+depot_address = depot_raw["formatted_address"]
+depot_name = depot_raw["name"]
+
+print("處理中...")
+time.sleep(2)
+
+for filename in listdir(path_depot):
+    with open(join(path_depot, filename), 'r') as f:
+        lines = f.readlines()
+    lines = [line.replace(" ", "") for line in lines]
+    with open(join(path_depot, filename), "w") as f:
+        f.writelines(lines)
+
+all_list = []
+for filename in listdir(path_depot):
+    with open(join(path_depot, filename), 'r') as f:
+        lines = f.readlines()
+        all_list.extend(lines)
+new_all_list = [x.replace("\n", "") for x in all_list]
+
+for filename in listdir(path_region):
+    with open(join(path_region, filename), 'r') as f:
+        lines = f.readlines()
+    lines = [line.replace(" ", "") for line in lines]
+    with open(join(path_region, filename), "w") as f:
+        f.writelines(lines)
+
+region_list = []
+for filename in listdir(path_region):
+    with open(join(path_region, filename), 'r') as f:
+        lines = f.readlines()
+        region_list.extend(lines)
+new_region_list = [x.replace("\n", "") for x in region_list]
+
+for item in new_all_list:
+    indexNames_item = depot_name.str.contains(item)
+    depot_raw = depot_raw[~indexNames_item]
+
+for item in new_region_list:
+    indexNames_item = depot_address.str.contains(item)
+    depot_raw = depot_raw[~indexNames_item]
+                
+print(depot_raw["name"].value_counts())
+print("data 已清理完...\n將輸出到桌面...\n")
+time.sleep(1)
+output_name = input("請輸入輸出的檔名\n")
+desktop =expanduser("~/Desktop/")
+
+submission = pd.DataFrame(depot_raw)
+submission.to_csv(desktop+output_name+".csv", index=False)

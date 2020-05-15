@@ -1,36 +1,68 @@
+from os import listdir
+from os.path import isfile, join, expanduser
+from os import environ
 import pandas as pd
 import warnings
+import time
+warnings.filterwarnings("ignore")
 
-path = "/Users/chad/visualprojects/carce/carce-git/"
-depot_raw = pd.read_csv(path+ "output3.csv")
+print("需要輸入以下資料的路徑\n1. 欲過濾*清單*所在資料夾\n2. 欲過濾*區域*所在資料夾\n3. 資料所在資料夾路徑\n4. 資料名稱\n")
+
+path_depot = input("請輸入欲過濾清單(以絕對路徑的資料夾表示)\n備註： 會自動載入資料夾中所有清單(eg. /Users/chad/visualprojects/carce/carce-git/filter/)\n")
+path_region = input("請輸入欲過濾區域(以絕對路徑的資料夾表示)\n備註： 會自動載入資料夾中所有清單\n")
+data_path = input("請輸入資料所在資料夾路徑\n")
+file = input("請輸入資料名稱\n備註：檔案需是csv格式\n")
+
+depot_raw = pd.read_csv(data_path+ file+".csv")
 
 depot_address = depot_raw["formatted_address"]
 depot_name = depot_raw["name"]
 
-# 從output.csv 中的店名去除各品牌
+print("處理中...")
+time.sleep(2)
 
-car_list = ["LEXUS", "HYUNDAI","現代","BMW","客運","NISSAN", "Suzuki", "SUZUKI", "匯豐", "滙豐", "賓士", "MIT", "honda", "LUXGEN", "Mazda", "mazda", "kia", "PGO", "pgo", "volvo"
-, "三菱", "audi", "VOLVO", "TOYOTA", "Tesla"]
-moto_list = ["kymco", "KYMCO", "yamaha", "YAMAHA", "宏佳騰", "sym", "SYM", "三陽", "gogoro", "捷安特", "重機", "山葉"]
-other_list = ["加油", "展示", "驗", "服務", "電動", "車勢", "鍍膜", "玻璃", "機車", "神腦", "國小", "機器", "咖啡", "選物"]
+for filename in listdir(path_depot):
+    with open(join(path_depot, filename), 'r') as f:
+        lines = f.readlines()
+    lines = [line.replace(" ", "") for line in lines]
+    with open(join(path_depot, filename), "w") as f:
+        f.writelines(lines)
 
-# 從output.csv 中的店名去除各連鎖
-chain_store = ["慶通" , "中油", "歐特耐", "車得適", "車麗屋", "真便宜", "新焦點", "黃帽", "耐途耐"]
+all_list = []
+for filename in listdir(path_depot):
+    with open(join(path_depot, filename), 'r') as f:
+        lines = f.readlines()
+        all_list.extend(lines)
+new_all_list = [x.replace("\n", "") for x in all_list]
 
-region_rm = ["大安區", "北投區", "中山區", "中正區", "板橋區", "新莊區", "蘆洲區", "土城區", "金門", "澎湖", "馬公", "中國", "連江"]
+for filename in listdir(path_region):
+    with open(join(path_region, filename), 'r') as f:
+        lines = f.readlines()
+    lines = [line.replace(" ", "") for line in lines]
+    with open(join(path_region, filename), "w") as f:
+        f.writelines(lines)
 
-name_filter = car_list + moto_list + other_list + chain_store
-address_filter = region_rm
+region_list = []
+for filename in listdir(path_region):
+    with open(join(path_region, filename), 'r') as f:
+        lines = f.readlines()
+        region_list.extend(lines)
+new_region_list = [x.replace("\n", "") for x in region_list]
 
-for item in name_filter:
+for item in new_all_list:
     indexNames_item = depot_name.str.contains(item)
     depot_raw = depot_raw[~indexNames_item]
 
-for item in address_filter:
+for item in new_region_list:
     indexNames_item = depot_address.str.contains(item)
     depot_raw = depot_raw[~indexNames_item]
                 
 print(depot_raw["name"].value_counts())
+print("data 已清理完...\n將輸出到桌面...\n")
+time.sleep(1)
+output_name = input("請輸入輸出的檔名\n")
+desktop =expanduser("~/Desktop/")
+
 submission = pd.DataFrame(depot_raw)
-submission.to_csv("test2.csv", index=False)
+submission.to_csv(desktop+output_name+".csv", index=False)
 

@@ -1,0 +1,3 @@
+([('depot',
+   '/Users/chad/visualprojects/carce/carce-git/dist/depot',
+   'EXECUTABLE')],)
